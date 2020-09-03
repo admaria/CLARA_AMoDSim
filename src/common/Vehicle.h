@@ -31,13 +31,14 @@ class Vehicle: public Packet {
 
         double speed;  // Avg. speed of vehicle in channel
         double acceleration; // Avg. acceleration of vehicle
-        
+        int passengers;
         double currentTraveledTime;
         double optimalEstimatedTravelTime;
 
     public:
         Vehicle();
-        Vehicle(int specialVehicle, double speed, int trafficWeight);
+        Vehicle(int specialVehicle, double speed, int Weight);
+        Vehicle(int specialVehicle, double speed, int Weight, int seats);
         virtual ~Vehicle();
         virtual int getID() const;
         virtual double getTraveledDistance() const;
@@ -58,6 +59,8 @@ class Vehicle: public Packet {
         virtual void setOptimalEstimatedTravelTime(double optimalEstimatedTravelTime);
         virtual double getAcceleration() const;
         void setSpecialVehicle(int specialVehicle);
+	int getPassengers() const;
+	void setPassengers(int passengers);
 };
 
 #endif /* VEHICLE_H_ */

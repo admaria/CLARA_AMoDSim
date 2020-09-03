@@ -26,6 +26,7 @@ Vehicle::Vehicle() {
     weight = 1;
     specialVehicle=0;
     currentTraveledTime = 0.0;
+    passengers=0;
     /**
      * default speed = 9.7 mps
      *  (35 km/h)
@@ -47,7 +48,7 @@ Vehicle::Vehicle(int specialVehicle, double speed, int Weight) {
     seats = 1;
     this->weight = Weight;
     this->specialVehicle=specialVehicle;
-
+    passengers=0;
     currentTraveledTime = 0.0;
     /**
      * default speed = 9.7 [mps]
@@ -55,6 +56,22 @@ Vehicle::Vehicle(int specialVehicle, double speed, int Weight) {
      */
     this->speed = speed;
     this->acceleration = 1.676; //[mpss]
+}
+Vehicle::Vehicle(int specialVehicle, double speed, int Weight, int seats) {
+		id = ++nextID;
+	    setName((std::to_string(id)).c_str());
+	    traveledDistance = 0.0;
+	    this->seats = seats;
+	    this->weight = Weight;
+	    this->specialVehicle=specialVehicle;
+	    passengers=0;
+	    currentTraveledTime = 0.0;
+	    /**
+	     * default speed = 9.7 [mps]
+	     *  (35 km/h)
+	     */
+	    this->speed = speed;
+	    this->acceleration = 1.676; //[mpss]
 }
 
 Vehicle::~Vehicle() {
@@ -120,6 +137,15 @@ double Vehicle::getOptimalEstimatedTravelTime() const {
 
 double Vehicle::getAcceleration() const {
 	return acceleration;
+}
+
+int Vehicle::getPassengers() const {
+	return passengers;
+}
+
+
+void Vehicle::setPassengers(int passengers) {
+	this->passengers = passengers;
 }
 
 void Vehicle::setSpecialVehicle(int specialVehicle) {

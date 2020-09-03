@@ -19,7 +19,7 @@
 #include <BaseCoord.h>
 #include "StopPointOrderingProposal.h"
 
-class HeuristicCoord: public BaseCoord {
+class RideSharingCoord: public BaseCoord {
 
 private:
     std::list<StopPointOrderingProposal*> addStopPointToTrip(int vehicleID, std::list<StopPoint*> oldTrip, StopPoint* newSP);

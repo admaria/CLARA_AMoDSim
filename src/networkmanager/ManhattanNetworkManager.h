@@ -33,7 +33,7 @@ private:
     double yTravelTime;
 
     simsignal_t newCivilVehicle;
-
+    simsignal_t signal_ambulanceTravelTime;
 
 
     std::set<int> setOfDestroyedNodes;
@@ -56,11 +56,14 @@ protected:
 	void buildTruckStartNode();
 	int pickRandomElemFromSet(std::set<int> s);
 	void buildHospitalNodes();
+	void buildSkilledHospitalNodes();
 	void buildCollectionPointNodes();
 	void buildStoragePointNodes();
 	int pickRandomStoragePointNode();
 	void initTopo(cTopology* topology); //initialize topology
 
+    virtual int pickSkilledHospitalFromNode(int addr);
+    virtual int getClosestExitNode(int address) override;
 
 
 
@@ -90,6 +93,7 @@ protected:
     virtual bool checkCollectionPointNode(int addr) override;
     virtual int pickClosestCollectionPointFromNode(int addr) override;
     virtual int pickRandomCollectionPointNode() override;
+    virtual void emit_signal_ambulanceTravelTime(int signal_value) override;
 };
 
 #endif

@@ -35,6 +35,7 @@ protected:
     int startingChannelWeight;
 
     int * hospitalAddresses;
+    int * skilledHospitalAddresses;
     int * collectionPointsAddresses;
     int * storagePointsAddresses;
 
@@ -69,9 +70,9 @@ public:
     inline double getAdditionalTravelTime(){return additionalTravelTime;} //Get the additional travel time due to acceleration and deceleration
     inline virtual double getAmbulanceSpeed() {return ambulanceSpeed;}
     inline virtual double getTruckSpeed() {return truckSpeed;}
+    virtual int getClosestExitNode(int address)=0;
 
-
-
+    virtual void emit_signal_ambulanceTravelTime(int signal_value) =0;
     virtual bool checkDestroyedNode(int addr) =0;
     virtual bool checkBorderNode(int addr) =0;
     virtual bool checkRedZoneNode(int addr) =0;
@@ -80,6 +81,8 @@ public:
     virtual int pickRandomNodeInRedZone()=0;
     virtual int pickClosestHospitalFromNode(int addr) = 0;
     virtual int pickRandomStoragePointNode() =0;
+
+    virtual int pickSkilledHospitalFromNode(int addr) = 0;
 
     virtual bool checkCollectionPointNode(int addr) = 0;
     virtual int pickClosestCollectionPointFromNode(int addr) = 0;

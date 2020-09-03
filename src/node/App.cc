@@ -59,7 +59,7 @@ private:
 	simsignal_t signal_civilDelayTravelTime;
 	simsignal_t signal_civilTravelTime;
 
-	simsignal_t signal_ambulanceTravelTime;
+
 	simsignal_t signal_ambulanceDelayTravelTime;
 
 
@@ -105,7 +105,7 @@ void App::generateCivilTraffic(simtime_t interval) {
 
 	if (intuniform(0, 1) == 0) {  // 50% chances: border node - collection point
 		civile=new Vehicle(-1, 9.7, 1); // vehicle(type,speed,traffic weight)
-	    destAddress = tcoord->getClosestExitNode(myAddress); // look for a border node
+	    destAddress = netmanager->getClosestExitNode(myAddress); // look for a border node
 
 	} else {
 
@@ -141,7 +141,7 @@ void App::initialize() {
 	signal_ambulanceDelayTravelTime = registerSignal("signal_ambulanceDelayTravelTime");
 	signal_civilDelayTravelTime = registerSignal("signal_civilDelayTravelTime");
 	signal_civilTravelTime =registerSignal("signal_civilTravelTime");
-	signal_ambulanceTravelTime =registerSignal("signal_ambulanceTravelTime");
+
 
 	signal_ambulancesIdle = registerSignal("signal_ambulancesIdle");
 
@@ -166,11 +166,10 @@ void App::initialize() {
 			Vehicle *v;
 
 			if (hospital) {
-				v = new Vehicle(1, ambulanceSpeed, 1);
-				v->setSeats(1);
+				v = new Vehicle(1, ambulanceSpeed, 1, seatsPerVehicle);
 			} else if (storagePoint){
 				v = new Vehicle(2, truckSpeed, 20);
-				v->setSeats(0);
+				v->setSeats(1);
 			}
 
             EV << "I am node " << myAddress << ". I HAVE THE VEHICLE "<< v->getID() << " of type " << v->getSpecialVehicle()<< ". It has " << v->getSeats() << " seats." << endl;
@@ -241,11 +240,15 @@ void App::handleMessage(cMessage *msg) {
 	case 1:	//ambulance
 		if (netmanager->checkHospitalNode(myAddress)) {
 //			emit(signal_ambulanceDelayTravelTime, (vehicle->getCurrentTraveledTime() - vehicle->getOptimalEstimatedTravelTime()) / numHops);
-			emit(signal_ambulanceTravelTime,vehicle->getCurrentTraveledTime()); //curr travel time
-
+			netmanager->emit_signal_ambulanceTravelTime(vehicle->getCurrentTraveledTime()); //curr travel time
+			vehicle->setPassengers(0);
 			EV << "Ambulance actual time from last stop point to current: " << vehicle->getCurrentTraveledTime() << " the estimated one: " << vehicle->getOptimalEstimatedTravelTime() << " hops: " << numHops << endl;
 
+			vehicle->setCurrentTraveledTime(0);
+			vehicle->setHopCount(0);
+
 		}
+
 
 		break;
 	case 2: //truck
@@ -264,6 +267,7 @@ void App::handleMessage(cMessage *msg) {
 		sendDelayTime = 180;  //180s lumped for boarding up an emergency
 		vehicle->setCurrentTraveledTime(vehicle->getCurrentTraveledTime() + sendDelayTime);
 		if (vehicle->getSpecialVehicle() == 1) {
+			vehicle->setPassengers(vehicle->getPassengers()+1);
 			double difference = abs(simTime().dbl() - currentStopPoint->getTime());
 			//emit actual time from request to pickup
 			tcoord->emitDifferenceFromRequestToPickup(difference, currentStopPoint->isRedCode()); //emit in two different signals if the request was a red code or not
@@ -279,25 +283,37 @@ void App::handleMessage(cMessage *msg) {
 		vehicle->setSrcAddr(myAddress);
 		vehicle->setDestAddr(nextStopPoint->getLocation());
 
-		// reset times
+
 		vehicle->setOptimalEstimatedTravelTime(netmanager->getHopDistance(myAddress, nextStopPoint->getLocation()) * (netmanager->getXChannelLength() / vehicle->getSpeed()));// * (netmanager->getXChannelLength() / vehicle->getSpeed())));
-
-		if(nextStopPoint->getIsPickup()){
-		vehicle->setCurrentTraveledTime(0);
-		vehicle->setHopCount(0);
-		}
-
-		//Time for boarding or drop-off passengers
-
 
 		sendDelayed(vehicle, sendDelayTime, "out");     //if there is another stop point send after sendDelayTime
 	}
 
 	//No other stop point for the vehicle. The vehicle stay here and it is registered in the node
-	else {
+
+
+	else if (tcoord->checkPendingRedStopPoints()) { //chiede al coordinatore se ha richieste rosse
+		tcoord->registerVehicle(vehicle, myAddress);
+		if (vehicle->getSpecialVehicle() == 1)
+			tcoord->pickPendingRedStopPoints(vehicle->getID(), myAddress);	// se si ne prende una e parte
+//		EV << " checkPendingRedStopPoints" << endl;
+
+	}
+
+
+	else if (tcoord->checkPendingStopPoints()) {// chiede al coordinatore se ha richieste normali pending
+		EV << " checkPendingStopPoints" << endl;
+
+        tcoord->registerVehicle(vehicle, myAddress);
+
+		if (vehicle->getSpecialVehicle() == 1)
+			tcoord->pickPendingStopPoints(vehicle->getID(), vehicle->getSeats(), myAddress); 		// chiede al coordinatore se ha richieste normali pending
+		// se si ne prende fino a max seat e parte
+	} else {
+
+
 		EV << "Vehicle " << vehicle->getID() << " is in node " << myAddress << endl;
 		tcoord->registerVehicle(vehicle, myAddress);
-
 
 		if (netmanager->checkHospitalNode(myAddress)){
 						emit(signal_ambulancesIdle,++currentVehiclesInNode);
@@ -341,6 +357,7 @@ void App::receiveSignal(cComponent *source, simsignal_t signalID, double vehicle
 
 				if (netmanager->checkHospitalNode(myAddress)){
 					emit(signal_ambulancesIdle,--currentVehiclesInNode);
+					vehicle->setPassengers(0);
 				}
 
 				EV << "Sending Vehicle from: " << vehicle->getSrcAddr() << " to " << vehicle->getDestAddr() << endl;

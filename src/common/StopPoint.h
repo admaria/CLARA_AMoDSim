@@ -35,6 +35,7 @@ class StopPoint : public cObject{
         double maxDelay;
         
         bool redCode; //is stop point of a red code emergency request
+        bool needSkilledHospital;
         
     public:
         StopPoint();
@@ -73,6 +74,10 @@ class StopPoint : public cObject{
         virtual int getYcoord() const;
         virtual bool isRedCode() const;
         virtual void setRedCode(bool redCode);
+
+        virtual double remainingTime();
+	bool isNeedSkilledHospital() const;
+	void setNeedSkilledHospital(bool needSkilledHospital);
 };
 
 #endif /* STOPPOINT_H_ */

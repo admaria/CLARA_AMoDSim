@@ -50,6 +50,7 @@ int ManhattanNetworkManager::pickRandomElemFromSet(std::set<int> s) {
 
 ManhattanNetworkManager::~ManhattanNetworkManager() {
     delete hospitalAddresses;
+    delete skilledHospitalAddresses;
     delete collectionPointsAddresses;
     delete topo;
     delete topoEmergency;
@@ -63,6 +64,7 @@ void ManhattanNetworkManager::initialize() {
 
     numberOfHospitals = par("numberOfHospitals");
     hospitalAddresses = new int[numberOfHospitals];
+    skilledHospitalAddresses = new int[1];
 
     numberOfCollectionPoints = par("numberOfCollectionPoints");
     collectionPointsAddresses = new int[numberOfCollectionPoints];
@@ -84,6 +86,9 @@ void ManhattanNetworkManager::initialize() {
 
     startingChannelWeight = 1000;
     // Creation of destroyed nodes set
+
+    signal_ambulanceTravelTime =registerSignal("signal_ambulanceTravelTime");
+
     buildSetOfDestroyedNodes();
 
 
@@ -91,6 +96,7 @@ void ManhattanNetworkManager::initialize() {
     buildsetOfAvailableNodes();
     buildSetOfBorderNodes();            // Creation of border zones nodes set
     buildHospitalNodes();
+    buildSkilledHospitalNodes();
     buildStoragePointNodes();
     buildCollectionPointNodes();
 
@@ -416,6 +422,11 @@ int ManhattanNetworkManager::pickClosestHospitalFromNode(int addr) {
 
 }
 
+int ManhattanNetworkManager::pickSkilledHospitalFromNode(int addr) {
+	//TODO: aggiungere skilledNumberOfHospital e distanza min
+	return skilledHospitalAddresses[0];
+}
+
 int ManhattanNetworkManager::pickRandomNodeInRedZone() {
     return pickRandomElemFromSet(setOfNodesInRedZone);
 }
@@ -440,6 +451,31 @@ int ManhattanNetworkManager::pickClosestCollectionPointFromNode(int addr) {
     }
 
     return destAddress;
+
+}
+
+
+int ManhattanNetworkManager::getClosestExitNode(int address) {
+
+	std::set<int> borderNodes = getSetOfBorderNodes();
+
+
+	int min = getNumberOfNodes()-1; // No roads can be greater that the number of nodes
+	int closestAddr=pickClosestCollectionPointFromNode(address);
+
+	for (auto elem : borderNodes) {
+		//calcolo min path
+		if (!checkDestroyedNode(elem)){
+		if (min > getHopDistance(address, elem)){
+			closestAddr = elem;
+			min = getHopDistance(address, elem);
+		}
+		}
+
+	}
+//	EV << "Closest Exit node for node: " << address << " is > " << closestAddr << endl;
+	return closestAddr;
+
 
 }
 
@@ -522,4 +558,14 @@ void ManhattanNetworkManager::updateTopology(cTopology* topology, int channelWei
 
 int ManhattanNetworkManager::pickRandomCollectionPointNode() {
     return collectionPointsAddresses[intuniform(0, numberOfCollectionPoints - 1)];
+}
+
+void ManhattanNetworkManager::buildSkilledHospitalNodes() {
+	skilledHospitalAddresses[0] = hospitalAddresses[0];
+}
+
+
+
+void ManhattanNetworkManager::emit_signal_ambulanceTravelTime(int signal_value) {
+    emit(signal_ambulanceTravelTime, signal_value);
 }

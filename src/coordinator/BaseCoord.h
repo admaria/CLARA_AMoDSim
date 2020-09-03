@@ -45,6 +45,7 @@ private:
         int emergencyRequestCounter;
         int redCodeRequestCounter;
         int truckRequestCounter;
+        int deadCount;
 
         AbstractNetworkManager* netmanager;
 
@@ -89,6 +90,10 @@ private:
         simsignal_t truckRequest;
 
         simsignal_t pickupEmergencies;
+        simsignal_t  deadCode;
+        simsignal_t signal_sizeEmergencyQueue;
+        simsignal_t signal_sizeRedcodeEmergencyQueue;
+
         int pickupEmergenciesCount;
 
         std::map<Vehicle*, int> vehicles; //Vehicle -> node address
@@ -104,6 +109,11 @@ private:
 
         typedef std::map<int,TripRequest*> PendingRequests; //requestID/request
         PendingRequests pendingRequests;
+        typedef std::list<StopPoint*> PendingStopPoints;
+	    PendingStopPoints pendingStopPoints;
+	    typedef std::list<StopPoint*> PendingRedStopPoints;
+		PendingRedStopPoints pendingRedStopPoints;
+
 
     	simsignal_t signal_civilEvacuated;
         int civilCounter;
@@ -118,6 +128,7 @@ private:
         virtual StopPointOrderingProposal* eval_requestAssignment(int vehicleID, TripRequest* newTR) = 0; //Sort the stop-points related to the specified vehicle including the new request's pickup and dropoff point, if feasible.
         virtual StopPointOrderingProposal* eval_RedCodeEmergencyRequestAssignment(int vehicleID, TripRequest* newTR) = 0;
         virtual StopPointOrderingProposal* eval_Assignment(int vehicleID, TripRequest* newTR)  = 0;
+        virtual StopPointOrderingProposal* eval_EmergencyRequestAssignment(int vehicleID, TripRequest* newTR) =0;
 
         void updateLinkWeight(cTopology::LinkOut* path, int pkChosenGate);
 
@@ -136,6 +147,8 @@ private:
         virtual void collectPercentileStats(std::string sigName, std::vector<double> values);
          void updateTopology();
         virtual void handleMessage(cMessage *msg);
+
+
     public:
         virtual ~BaseCoord();
 		void emitEmergencyRequest();
@@ -151,10 +164,14 @@ private:
         int countOnBoardRequests(int vehicleID);
         StopPoint* getNewAssignedStopPoint(int vehicleID);
         inline double getMinTripLength(){return minTripLength;}
-        int getClosestExitNode(int address);
+
         virtual void evacuateCivil(int address);
         virtual void emitPickupEmergencies();
-
+        virtual bool checkPendingRedStopPoints();
+        virtual bool checkPendingStopPoints();
+        virtual void pickPendingRedStopPoints(int vehicleID, int srcAddr);
+        virtual void pickPendingStopPoints(int vehicleID, int seats, int srcAddr);
+        virtual void checkRemainingTime(StopPoint* red);
 
 };
 

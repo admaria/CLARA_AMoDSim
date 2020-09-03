@@ -26,6 +26,19 @@ TripRequest::TripRequest() {
     vehicleID = -1;
 
     isSpecial = 0;
+    inFront = false;
+}
+
+
+TripRequest::TripRequest(StopPoint* pickup, StopPoint* dropoff, int isSpecial , bool inFront) {
+    id = ++nextID;
+    this->pickup = pickup;
+    this->dropoff = dropoff;
+    distanceToPickup = -1;
+    vehicleID = -1;
+
+    this->isSpecial = isSpecial;
+    this->inFront = inFront;
 }
 
 TripRequest::TripRequest(const TripRequest& other)
@@ -40,6 +53,7 @@ void TripRequest::copy(const TripRequest& other)
     this->dropoff = other.dropoff ? new StopPoint(*other.dropoff) : nullptr;
     this->distanceToPickup = other.distanceToPickup;
     this->vehicleID = other.vehicleID;
+    this->inFront = other.inFront;
 }
 
 
@@ -91,6 +105,10 @@ int TripRequest::getDistanceToPickup() const
 
 int TripRequest::getIsSpecial() const {
     return isSpecial;
+}
+
+void TripRequest::setInFront(bool inFront) {
+	this->inFront = inFront;
 }
 
 void TripRequest::setIsSpecial(int isSpecial) {
